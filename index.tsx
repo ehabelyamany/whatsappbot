@@ -51,10 +51,10 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
     const generate = async () => {
       try {
         setLoading(true);
-        // نص تجريبي واضح لو مفيش بيانات فعلية
-        const qrContent = data || "https://ehab-elyamany.com/waiting-for-connection";
+        // نستخدم رابط محفز لو مفيش بيانات فعلية
+        const qrContent = data || "https://ehab-elyamany.com/qr-bridge-waiting";
         const url = await QRCode.toDataURL(qrContent, { 
-          width: 512, // جودة أعلى
+          width: 800, // دقة عالية جداً
           margin: 1, 
           color: { dark: '#000000', light: '#ffffff' },
           errorCorrectionLevel: 'H'
@@ -70,18 +70,19 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
   }, [data]);
 
   if (loading) return (
-    <div className="w-[300px] h-[300px] flex flex-col items-center justify-center text-emerald-500 gap-4">
+    <div className="w-full aspect-square flex flex-col items-center justify-center text-emerald-500 gap-4">
       <Loader2 className="animate-spin" size={48} />
       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">تحميل الرمز...</span>
     </div>
   );
 
   return (
-    <div className="relative w-[300px] h-[300px] flex items-center justify-center">
+    <div className="relative w-full aspect-square max-w-[450px] mx-auto bg-white p-4 rounded-3xl shadow-2xl flex items-center justify-center">
+      <div className="scan-line !w-[calc(100%-2rem)] left-4"></div>
       <img 
         src={src} 
-        style={{ imageRendering: 'pixelated' }} // لضمان حدة المربعات وسهولة المسح
-        className={`w-full h-full object-contain aspect-square transition-all duration-700 ${!data ? 'opacity-30 blur-[1px]' : 'opacity-100 shadow-xl'}`} 
+        style={{ imageRendering: 'pixelated' }} 
+        className="w-full h-full object-contain block" 
         alt="WhatsApp QR Code" 
       />
     </div>
@@ -174,7 +175,7 @@ const App = () => {
       <aside className="w-24 lg:w-80 bg-slate-950 border-l border-white/5 flex flex-col p-8 z-50">
         <div className="flex items-center gap-4 text-emerald-500 mb-16 lg:px-4">
           <Zap size={28} fill="currentColor" />
-          <span className="hidden lg:block text-3xl font-black tracking-tighter">فريدة</span>
+          <span className="hidden lg:block text-3xl font-black tracking-tighter text-white">فريدة</span>
         </div>
         <nav className="flex-1 space-y-4">
           <NavItem id="sessions" icon={<MessageCircle size={24} />} label="البوتات والربط" active={activeTab} set={setActiveTab} />
@@ -216,7 +217,7 @@ const App = () => {
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <header className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-950/40 backdrop-blur-xl">
                     <div>
-                      <h3 className="text-2xl font-black">{selectedSessionId}</h3>
+                      <h3 className="text-2xl font-black text-white">{selectedSessionId}</h3>
                       <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Bridge ID: {currentSession?.bridgeKey}</p>
                     </div>
                     <div className="flex gap-4">
@@ -229,14 +230,13 @@ const App = () => {
 
                   <div className="flex-1 flex overflow-hidden">
                     {currentSession?.status !== 'connected' ? (
-                      <div className="flex-1 flex flex-col items-center justify-center p-10 space-y-12">
-                         <div className="bg-white p-8 rounded-[3.5rem] shadow-[0_0_50px_rgba(255,255,255,0.1)] relative overflow-hidden flex items-center justify-center">
-                            <div className="scan-line"></div>
+                      <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-10 overflow-y-auto custom-scrollbar">
+                         <div className="w-full max-w-[450px]">
                             <QRCodeDisplay data={currentSession?.realQrData} />
                          </div>
-                         <div className="text-center glass p-8 rounded-[2.5rem] max-w-sm border-white/5">
+                         <div className="text-center glass p-8 rounded-[2.5rem] w-full max-w-[450px] border-white/5">
                             <h4 className="font-black text-emerald-500 mb-2">خطوة الربط</h4>
-                            <p className="text-xs font-bold text-slate-400 leading-relaxed">افتح واتساب &gt; الأجهزة المرتبطة &gt; ربط جهاز. ثم وجه الكاميرا نحو المربع أعلاه.</p>
+                            <p className="text-sm font-bold text-slate-400 leading-relaxed">افتح واتساب &gt; الأجهزة المرتبطة &gt; ربط جهاز. ثم وجه الكاميرا نحو المربع أعلاه.</p>
                          </div>
                       </div>
                     ) : (
@@ -279,7 +279,7 @@ const App = () => {
         {activeTab === 'models' && (
            <div className="p-16 space-y-12 overflow-y-auto h-full custom-scrollbar">
               <div className="flex justify-between items-end">
-                <h2 className="text-6xl font-black tracking-tighter">تخصيص الرد</h2>
+                <h2 className="text-6xl font-black tracking-tighter text-white">تخصيص الرد</h2>
                 <p className="text-emerald-500 font-black uppercase text-xs tracking-widest">Brain Configuration</p>
               </div>
               {profiles.map((p: any) => (
@@ -301,7 +301,7 @@ const App = () => {
 
         {activeTab === 'dashboard' && (
            <div className="p-16 space-y-12">
-              <h2 className="text-6xl font-black tracking-tighter">نظرة عامة</h2>
+              <h2 className="text-6xl font-black tracking-tighter text-white">نظرة عامة</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                  <StatBox label="إجمالي القنوات" value={sessions.length} unit="BOTS" />
                  <StatBox label="الرسائل المعالجة" value={sessions.reduce((acc, s) => acc + s.messages.length, 0)} unit="MSGS" />
