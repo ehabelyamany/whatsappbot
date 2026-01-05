@@ -1,81 +1,46 @@
 
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { 
-  LayoutDashboard, 
-  QrCode, 
-  Cpu, 
-  Plus, 
-  Trash2, 
-  Power, 
-  LogOut, 
-  Terminal as TerminalIcon, 
-  ShieldCheck, 
-  Activity, 
-  Zap,
-  MessageCircle,
-  Code,
-  Copy,
-  CheckCircle2,
-  AlertCircle,
-  Info,
-  ExternalLink,
-  Play,
-  ChevronRight,
-  User
-} from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import QRCode from 'qrcode';
 import { GoogleGenAI } from "@google/genai";
 
-// --- Interfaces ---
-interface AIProfile {
-  id: string;
-  name: string;
-  modelName: string;
-  systemInstruction: string;
-  temperature: number;
-}
+// استخراج الأيقونات بشكل آمن
+const { 
+  QrCode, Cpu, Plus, Trash2, LogOut, ShieldCheck, Activity, Zap, 
+  MessageCircle, Code, Copy, CheckCircle2, AlertCircle, Play, 
+  ChevronRight, User 
+} = Lucide;
 
-interface ChatMessage {
-  id: string;
-  senderName: string;
-  text: string;
-  timestamp: Date;
-  type: 'inbound' | 'outbound';
-}
-
-interface WASession {
-  id: string;
-  status: 'connected' | 'disconnected' | 'connecting';
-  aiProfileId: string;
-  bridgeKey: string;
-  realQrData: string | null;
-  messages: ChatMessage[];
-}
-
+// --- الإعدادات الثابتة ---
 const STORAGE_KEYS = {
   PROFILES: 'farida_v7_profiles',
   SESSIONS: 'farida_v7_sessions',
 };
 
-// --- Sub-components (Moved up to ensure they are defined before use) ---
-
-const NavItem = ({ id, icon, label, active, set }: any) => (
-  <button onClick={() => set(id)} className={`w-full flex items-center gap-5 p-6 rounded-[2rem] transition-all duration-500 ${active === id ? 'bg-emerald-600 text-white shadow-2xl shadow-emerald-900/40 scale-105' : 'text-slate-600 hover:bg-slate-900 hover:text-slate-300'}`}>
-    {icon}
-    <span className="hidden lg:block font-black text-sm tracking-tight">{label}</span>
+// --- المكونات الصغيرة ---
+const NavItem = ({ id, icon, label, active, set }) => (
+  <button 
+    onClick={() => set(id)} 
+    className={`w-full flex items-center gap-5 p-6 rounded-[2rem] transition-all duration-500 ${active === id ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:bg-slate-900 hover:text-slate-300'}`}
+  >
+    {React.cloneElement(icon as React.ReactElement, { size: 24 })}
+    <span className="hidden lg:block font-black text-sm">{label}</span>
   </button>
 );
 
-const SimulationButton = ({ onClick, label }: any) => (
-  <button onClick={onClick} className="p-4 bg-slate-900 rounded-2xl text-[10px] font-black text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all uppercase tracking-widest border border-emerald-500/10 shadow-lg">
+const SimulationButton = ({ onClick, label }) => (
+  <button 
+    onClick={onClick} 
+    className="p-4 bg-slate-900 rounded-2xl text-[10px] font-black text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all uppercase border border-emerald-500/10"
+  >
     {label}
   </button>
 );
 
-const StatBox = ({ label, value, unit }: any) => (
+const StatBox = ({ label, value, unit }) => (
   <div className="glass p-12 rounded-[4rem] border-white/5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
-     <p className="text-slate-600 font-black uppercase text-[10px] tracking-[0.3em] mb-4">{label}</p>
+     <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest mb-4">{label}</p>
      <div className="flex items-baseline gap-4">
         <span className="text-7xl font-black text-white group-hover:text-emerald-500 transition-colors">{value}</span>
         <span className="text-slate-700 font-bold">{unit}</span>
@@ -83,64 +48,60 @@ const StatBox = ({ label, value, unit }: any) => (
   </div>
 );
 
-const QRCodeDisplay = ({ data }: { data: string | null }) => {
+const QRCodeDisplay = ({ data }) => {
   const [src, setSrc] = useState('');
   useEffect(() => { 
-    if (data) {
-      QRCode.toDataURL(data, { width: 350, margin: 2 }).then(setSrc).catch(console.error); 
-    } else {
-      QRCode.toDataURL("WAITING_FOR_BRIDGE", { width: 350, margin: 2, color: { dark: '#00000033' } }).then(setSrc).catch(console.error); 
-    }
+    const generate = async () => {
+      try {
+        const url = await QRCode.toDataURL(data || "WAITING_FOR_BRIDGE", { width: 350, margin: 2, color: { dark: data ? '#000000' : '#00000033' } });
+        setSrc(url);
+      } catch (err) { console.error(err); }
+    };
+    generate();
   }, [data]);
   return src ? <img src={src} className={`w-[300px] h-[300px] transition-all ${!data ? 'blur-sm opacity-20' : 'opacity-100'}`} alt="QR" /> : null;
 };
 
-// --- Main App ---
-
+// --- التطبيق الرئيسي ---
 const App = () => {
   const [activeTab, setActiveTab] = useState('sessions');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [profiles, setProfiles] = useState<AIProfile[]>([]);
-  const [sessions, setSessions] = useState<WASession[]>([]);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // تحميل البيانات
   useEffect(() => {
-    try {
-      const savedProfiles = localStorage.getItem(STORAGE_KEYS.PROFILES);
-      const savedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
-      
-      if (savedProfiles) {
-        setProfiles(JSON.parse(savedProfiles));
-      } else {
-        setProfiles([{
-          id: 'farida-main',
-          name: 'فريدة الذكية',
-          modelName: 'gemini-3-flash-preview',
-          systemInstruction: 'أنت فريدة، مساعدة إيهاب اليمني الشخصية. ردي بذكاء وثقة وبلهجة مصرية محترمة.',
-          temperature: 0.8
-        }]);
-      }
-      
-      if (savedSessions) setSessions(JSON.parse(savedSessions));
-    } catch (err) {
-      console.error("Storage loading error:", err);
+    const savedProfiles = localStorage.getItem(STORAGE_KEYS.PROFILES);
+    const savedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
+    
+    if (savedProfiles) {
+      setProfiles(JSON.parse(savedProfiles));
+    } else {
+      setProfiles([{
+        id: 'farida-main',
+        name: 'فريدة الذكية',
+        modelName: 'gemini-3-flash-preview',
+        systemInstruction: 'أنت فريدة، مساعدة إيهاب اليمني الشخصية. ردي بذكاء وثقة وبلهجة مصرية محترمة.',
+        temperature: 0.8
+      }]);
     }
+    if (savedSessions) setSessions(JSON.parse(savedSessions));
   }, []);
 
+  // حفظ البيانات
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(profiles));
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
   }, [profiles, sessions]);
 
-  const askFarida = async (prompt: string, profileId: string, senderName: string) => {
+  const askFarida = async (prompt, profileId, senderName) => {
     const profile = profiles.find(p => p.id === profileId);
     if (!profile) return "عذراً يا إيهاب، لم أجد إعدادات عقلي.";
     try {
-      // Safe access to API KEY
-      const apiKey = process.env?.API_KEY || "";
-      if (!apiKey) return "تنبيه: API KEY غير موجود. يرجى إعداده في البيئة.";
-      
+      const apiKey = process.env.API_KEY || "";
+      if (!apiKey) return "تنبيه: API KEY غير متوفر.";
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: profile.modelName || 'gemini-3-flash-preview',
@@ -148,14 +109,11 @@ const App = () => {
         config: { systemInstruction: profile.systemInstruction, temperature: profile.temperature }
       });
       return response.text || "فشلت في صياغة الرد.";
-    } catch (e: any) { 
-      console.error("AI Error:", e);
-      return `خطأ في الاتصال بفريدة: ${e.message}`; 
-    }
+    } catch (e) { return `خطأ في الاتصال بفريدة: ${e.message}`; }
   };
 
   const handleAddSession = () => {
-    const newSession: WASession = {
+    const newSession = {
       id: `Bot-${Math.floor(100 + Math.random() * 899)}`,
       status: 'disconnected',
       aiProfileId: profiles[0]?.id || '',
@@ -167,16 +125,16 @@ const App = () => {
     setSelectedSessionId(newSession.id);
   };
 
-  const simulateMessage = async (sessionId: string, sender: string, text: string) => {
+  const simulateMessage = async (sessionId, sender, text) => {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) return;
     
-    const inbound: ChatMessage = { id: Date.now().toString(), senderName: sender, text, timestamp: new Date(), type: 'inbound' };
+    const inbound = { id: Date.now().toString(), senderName: sender, text, timestamp: new Date(), type: 'inbound' };
     setSessions(prev => prev.map(s => s.id === sessionId ? {...s, messages: [...s.messages, inbound]} : s));
 
     setIsGenerating(true);
     const replyText = await askFarida(text, session.aiProfileId, sender);
-    const outbound: ChatMessage = { id: 'AI-'+Date.now(), senderName: 'فريدة', text: replyText, timestamp: new Date(), type: 'outbound' };
+    const outbound = { id: 'AI-'+Date.now(), senderName: 'فريدة', text: replyText, timestamp: new Date(), type: 'outbound' };
     setSessions(prev => prev.map(s => s.id === sessionId ? {...s, messages: [...s.messages, outbound]} : s));
     setIsGenerating(false);
   };
@@ -185,14 +143,14 @@ const App = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[#020617]">
         <div className="max-w-md w-full glass p-12 rounded-[4rem] text-center space-y-10 shadow-2xl">
           <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
             <Zap size={48} className="text-emerald-500" fill="currentColor" />
           </div>
           <div>
             <h1 className="text-5xl font-black text-white mb-2">فريدة V7</h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">WhatsApp AI Autopilot</p>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">WhatsApp AI System</p>
           </div>
           <button onClick={() => setIsLoggedIn(true)} className="w-full py-6 bg-emerald-600 rounded-[2.5rem] font-black text-xl hover:bg-emerald-500 transition-all shadow-xl">دخول النظام</button>
         </div>
@@ -202,7 +160,6 @@ const App = () => {
 
   return (
     <div className="flex h-screen bg-[#030712] text-slate-100 font-sans rtl overflow-hidden">
-      {/* Sidebar */}
       <aside className="w-24 lg:w-80 bg-slate-950 border-l border-white/5 flex flex-col p-8 z-50">
         <div className="flex items-center gap-4 text-emerald-500 mb-16 lg:px-4">
           <Zap size={28} fill="currentColor" />
@@ -218,11 +175,11 @@ const App = () => {
         </button>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {activeTab === 'sessions' && (
-          <div className="flex h-full overflow-hidden">
+          <div className="flex h-full">
             <div className="w-80 border-l border-white/5 bg-slate-950/20 p-8 flex flex-col">
-              <button onClick={handleAddSession} className="w-full py-6 bg-emerald-600 rounded-[2rem] font-black text-sm hover:bg-emerald-500 transition-all shadow-xl mb-8 flex items-center justify-center gap-2">
+              <button onClick={handleAddSession} className="w-full py-6 bg-emerald-600 rounded-[2rem] font-black text-sm hover:bg-emerald-500 shadow-xl mb-8 flex items-center justify-center gap-2">
                 <Plus size={18}/> إضافة قناة
               </button>
               <div className="flex-1 space-y-4 overflow-y-auto">
@@ -249,7 +206,7 @@ const App = () => {
                   <header className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-950/40 backdrop-blur-xl">
                     <div>
                       <h3 className="text-2xl font-black">{selectedSessionId}</h3>
-                      <p className="text-[10px] font-black text-emerald-500 uppercase">Key: {currentSession?.bridgeKey}</p>
+                      <p className="text-[10px] font-black text-emerald-500">Key: {currentSession?.bridgeKey}</p>
                     </div>
                     <div className="flex gap-4">
                        {currentSession?.status === 'disconnected' && (
@@ -267,7 +224,7 @@ const App = () => {
                             <QRCodeDisplay data={currentSession?.realQrData} />
                          </div>
                          <div className="text-center glass p-8 rounded-[2rem] max-w-sm">
-                            <p className="text-sm font-bold text-slate-400">عشان الكود يشتغل، شغل سيرفر الكوبري وحط الـ Key المكتوب فوق.</p>
+                            <p className="text-sm font-bold text-slate-400">اربط موبايلك بالماسح الضوئي بعد تشغيل سيرفر الواتساب.</p>
                          </div>
                       </div>
                     ) : (
@@ -298,7 +255,7 @@ const App = () => {
         )}
 
         {activeTab === 'models' && (
-           <div className="p-16 space-y-12 animate-in overflow-y-auto h-full">
+           <div className="p-16 space-y-12 overflow-y-auto h-full">
               <h2 className="text-6xl font-black">تخصيص الرد</h2>
               {profiles.map(p => (
                 <div key={p.id} className="glass p-12 rounded-[4rem] border-white/5 space-y-10">
@@ -328,17 +285,11 @@ const App = () => {
            </div>
         )}
       </main>
-
-      <style>{`
-        .scan-line { position: absolute; width: 100%; height: 4px; background: #10b981; box-shadow: 0 0 20px #10b981; animation: scan 3s linear infinite; z-index: 20; left: 0; }
-        @keyframes scan { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .animate-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
     </div>
   );
 };
 
+// تشغيل التطبيق في النهاية لضمان استقرار التحميل
 const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);

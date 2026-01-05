@@ -8,13 +8,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script>
-      // Shim process.env to prevent crashes on production deployments like Netlify
-      window.process = window.process || { env: { API_KEY: "" } };
+      // إعداد بيئة وهمية لـ process لمنع انهيار الكود في المتصفح
+      window.process = { env: { API_KEY: "" } };
     </script>
     <style>
       body {
         font-family: 'Cairo', sans-serif;
-        background-color: #020617;
+        background-color: #020617; /* اللون الكحلي اللي بيظهرلك */
         color: #f8fafc;
         margin: 0;
         overflow: hidden;
@@ -24,21 +24,29 @@
         backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
-      ::-webkit-scrollbar {
-        width: 5px;
-      }
-      ::-webkit-scrollbar-thumb {
+      .scan-line {
+        position: absolute;
+        width: 100%;
+        height: 4px;
         background: #10b981;
-        border-radius: 10px;
+        box-shadow: 0 0 20px #10b981;
+        animation: scan 3s linear infinite;
+        z-index: 20;
+        left: 0;
+      }
+      @keyframes scan {
+        0% { top: 0%; opacity: 0; }
+        50% { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
       }
     </style>
     <script type="importmap">
 {
   "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
+    "react": "https://esm.sh/react@18.3.1",
     "react-dom": "https://esm.sh/react-dom@18.3.1",
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "react": "https://esm.sh/react@18.3.1",
+    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
     "@google/genai": "https://esm.sh/@google/genai@0.21.0",
     "qrcode": "https://esm.sh/qrcode@1.5.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
@@ -49,7 +57,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- سنحاول تحميل الملف كـ JS لأن Netlify قد لا يخدم TSX بشكل صحيح بدون build step -->
+    <!-- ملاحظة مهمة لإيهاب: لو بترفع على Netlify يدوي، لازم تستخدم أداة زي Vite عشان تحول الـ TSX لـ JS -->
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>

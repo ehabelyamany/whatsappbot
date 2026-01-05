@@ -1,7 +1,5 @@
 {
   "description": "نظام فريدة المتقدم لإدارة بوتات الواتساب الذكية مع دعم كامل للبروفايلات المتعددة والذاكرة طويلة الأمد.",
-  "requestFramePermissions": [
-    "camera"
-  ],
+  "requestFramePermissions": [],
   "name": "فريدة - WhatsApp AI Manager"
 }
