@@ -51,13 +51,13 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
     const generate = async () => {
       try {
         setLoading(true);
-        // نستخدم نص تجريبي لو مفيش بيانات فعلية
-        const qrContent = data || "https://farida-ai.io/waiting";
+        // نص واتساب وهمي يحاكي الحقيقي لتقليل أخطاء المسح
+        const qrContent = data || "1@uG23fGhz7LpQW9z12kLmoPqRtSvWxYz88AbCdEfGhIjKlMnOpQrStUvWxYz==";
         const url = await QRCode.toDataURL(qrContent, { 
-          width: 600, 
-          margin: 4, // زيادة الهامش الأبيض (Quiet Zone) وهو سر النجاح
+          width: 512, 
+          margin: 4, 
           color: { dark: '#000000', light: '#ffffff' },
-          errorCorrectionLevel: 'H'
+          errorCorrectionLevel: 'M' // تقليل الكثافة لجعل المربعات أكبر وأسهل في المسح
         });
         setSrc(url);
         setLoading(false);
@@ -72,13 +72,12 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
   if (loading) return (
     <div className="w-full aspect-square flex flex-col items-center justify-center text-emerald-500 gap-4">
       <Loader2 className="animate-spin" size={48} />
-      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">تحميل الرمز...</span>
+      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">توليد الكود...</span>
     </div>
   );
 
   return (
-    <div className="relative w-full aspect-square max-w-[320px] mx-auto bg-white p-6 rounded-2xl shadow-2xl flex items-center justify-center overflow-hidden border-4 border-white">
-      <div className="scan-line !w-[calc(100%-3rem)] left-6"></div>
+    <div className="qr-container relative w-full aspect-square max-w-[300px] mx-auto bg-white p-4 rounded-xl shadow-2xl flex items-center justify-center border-[12px] border-white">
       <img 
         src={src} 
         style={{ imageRendering: 'pixelated' }} 
@@ -101,7 +100,7 @@ const App = () => {
     const savedProfiles = localStorage.getItem(STORAGE_KEYS.PROFILES);
     const savedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
     if (savedProfiles) setProfiles(JSON.parse(savedProfiles));
-    else setProfiles([{ id: 'farida-main', name: 'فريدة الذكية', modelName: 'gemini-3-flash-preview', systemInstruction: 'أنت فريدة، مساعدة إيهاب اليمني الشخصية.', temperature: 0.8 }]);
+    else setProfiles([{ id: 'farida-main', name: 'فريدة الذكية', modelName: 'gemini-3-flash-preview', systemInstruction: 'أنت فريدة، مساعدة إيهاب اليمني الشخصية، ترد باحترافية وذكاء.', temperature: 0.8 }]);
     if (savedSessions) setSessions(JSON.parse(savedSessions));
   }, []);
 
@@ -221,8 +220,10 @@ const App = () => {
                       <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Bridge ID: {currentSession?.bridgeKey}</p>
                     </div>
                     <div className="flex gap-4">
-                       {currentSession?.status === 'disconnected' && (
-                         <button onClick={() => setSessions(sessions.map(s => s.id === selectedSessionId ? {...s, status: 'connected'} : s))} className="px-6 py-3 bg-blue-600 rounded-2xl font-black text-xs hover:bg-blue-500 transition-all">تجربة المحاكاة</button>
+                       {currentSession?.status === 'disconnected' ? (
+                         <button onClick={() => setSessions(sessions.map(s => s.id === selectedSessionId ? {...s, status: 'connected'} : s))} className="px-6 py-3 bg-emerald-600 rounded-2xl font-black text-xs hover:bg-emerald-500 transition-all shadow-lg">محاكاة نجاح الربط</button>
+                       ) : (
+                         <button onClick={() => setSessions(sessions.map(s => s.id === selectedSessionId ? {...s, status: 'disconnected'} : s))} className="px-6 py-3 bg-slate-800 rounded-2xl font-black text-xs hover:bg-slate-700 transition-all">قطع الاتصال</button>
                        )}
                        <button onClick={() => setSessions(sessions.filter(s => s.id !== selectedSessionId))} className="p-3 bg-red-600/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all"><Trash2 size={20}/></button>
                     </div>
@@ -235,16 +236,20 @@ const App = () => {
                             <QRCodeDisplay data={currentSession?.realQrData} />
                          </div>
                          <div className="text-center glass p-8 rounded-[2.5rem] w-full max-w-[400px] border-white/5">
-                            <h4 className="font-black text-emerald-500 mb-2">خطوة الربط</h4>
-                            <p className="text-sm font-bold text-slate-400 leading-relaxed">افتح واتساب &gt; الأجهزة المرتبطة &gt; ربط جهاز. ثم وجه الكاميرا نحو المربع أعلاه.</p>
+                            <h4 className="font-black text-emerald-500 mb-2">كيف تربط حسابك؟</h4>
+                            <p className="text-sm font-bold text-slate-400 leading-relaxed mb-4">بما أن هذا إصدار تجريبي (Frontend)، لا يمكن الربط الفعلي بواتساب. استخدم زر "محاكاة نجاح الربط" بالأعلى لتجربة واجهة الدردشة والذكاء الاصطناعي.</p>
+                            <div className="flex items-center gap-2 text-[10px] text-orange-500 font-black uppercase justify-center bg-orange-500/10 p-2 rounded-lg">
+                              <AlertCircle size={14} /> الكود المعروض هو كود تجريبي فقط
+                            </div>
                          </div>
                       </div>
                     ) : (
                       <div className="flex-1 flex flex-col">
                          <div className="flex-1 p-10 overflow-y-auto space-y-6 custom-scrollbar">
                            {currentSession.messages.length === 0 && (
-                             <div className="h-full flex items-center justify-center opacity-10">
+                             <div className="h-full flex flex-col items-center justify-center opacity-10 gap-4">
                                <MessageCircle size={80} />
+                               <p className="font-black text-xl uppercase tracking-tighter">لا توجد رسائل بعد</p>
                              </div>
                            )}
                            {currentSession.messages.map((msg: any) => (
@@ -258,13 +263,13 @@ const App = () => {
                            {isGenerating && (
                              <div className="flex items-center gap-3 px-4">
                                <Loader2 className="animate-spin text-emerald-500" size={16} />
-                               <div className="text-[10px] font-black text-emerald-500 animate-pulse uppercase tracking-widest">فريدة تحلل الرسالة...</div>
+                               <div className="text-[10px] font-black text-emerald-500 animate-pulse uppercase tracking-widest">فريدة تفكر...</div>
                              </div>
                            )}
                          </div>
                          <div className="p-8 bg-slate-950/60 border-t border-white/5 grid grid-cols-2 md:grid-cols-3 gap-4 backdrop-blur-md">
-                            <SimulationButton onClick={() => simulateMessage(selectedSessionId, 'عميل جديد', 'مرحباً، أريد معرفة الأسعار')} label="استفسار أسعار" />
-                            <SimulationButton onClick={() => simulateMessage(selectedSessionId, 'رئيس العمل', 'هل انتهيت من تقرير اليوم؟')} label="رسالة عمل" />
+                            <SimulationButton onClick={() => simulateMessage(selectedSessionId, 'إيهاب', 'ازيك يا فريدة، قوليلي آخر الأخبار')} label="تحية الصباح" />
+                            <SimulationButton onClick={() => simulateMessage(selectedSessionId, 'عميل', 'بكام سعر الاشتراك الشهري؟')} label="سؤال مبيعات" />
                             <button onClick={() => setSessions(prev => prev.map(s => s.id === selectedSessionId ? {...s, messages: []} : s))} className="p-4 bg-slate-900/50 rounded-2xl text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase">مسح المحادثة</button>
                          </div>
                       </div>
@@ -280,7 +285,7 @@ const App = () => {
            <div className="p-16 space-y-12 overflow-y-auto h-full custom-scrollbar">
               <div className="flex justify-between items-end">
                 <h2 className="text-6xl font-black tracking-tighter text-white">تخصيص الرد</h2>
-                <p className="text-emerald-500 font-black uppercase text-xs tracking-widest">Brain Configuration</p>
+                <p className="text-emerald-500 font-black uppercase text-xs tracking-widest">Farida's Brain</p>
               </div>
               {profiles.map((p: any) => (
                 <div key={p.id} className="glass p-12 rounded-[4rem] border-white/5 space-y-10 hover:border-emerald-500/20 transition-all">
