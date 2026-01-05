@@ -26,10 +26,10 @@
       .scan-line {
         position: absolute;
         width: 100%;
-        height: 4px;
+        height: 3px;
         background: #10b981;
-        box-shadow: 0 0 20px #10b981;
-        animation: scan 2.5s linear infinite;
+        box-shadow: 0 0 15px #10b981;
+        animation: scan 2s linear infinite;
         z-index: 20;
         left: 0;
       }
@@ -38,6 +38,9 @@
         50% { opacity: 1; }
         100% { top: 100%; opacity: 0; }
       }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
     </style>
   <script type="importmap">
 {

@@ -51,11 +51,11 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
     const generate = async () => {
       try {
         setLoading(true);
-        // نستخدم رابط محفز لو مفيش بيانات فعلية
-        const qrContent = data || "https://ehab-elyamany.com/qr-bridge-waiting";
+        // نستخدم نص تجريبي لو مفيش بيانات فعلية
+        const qrContent = data || "https://farida-ai.io/waiting";
         const url = await QRCode.toDataURL(qrContent, { 
-          width: 800, // دقة عالية جداً
-          margin: 1, 
+          width: 600, 
+          margin: 4, // زيادة الهامش الأبيض (Quiet Zone) وهو سر النجاح
           color: { dark: '#000000', light: '#ffffff' },
           errorCorrectionLevel: 'H'
         });
@@ -77,8 +77,8 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
   );
 
   return (
-    <div className="relative w-full aspect-square max-w-[450px] mx-auto bg-white p-4 rounded-3xl shadow-2xl flex items-center justify-center">
-      <div className="scan-line !w-[calc(100%-2rem)] left-4"></div>
+    <div className="relative w-full aspect-square max-w-[320px] mx-auto bg-white p-6 rounded-2xl shadow-2xl flex items-center justify-center overflow-hidden border-4 border-white">
+      <div className="scan-line !w-[calc(100%-3rem)] left-6"></div>
       <img 
         src={src} 
         style={{ imageRendering: 'pixelated' }} 
@@ -230,11 +230,11 @@ const App = () => {
 
                   <div className="flex-1 flex overflow-hidden">
                     {currentSession?.status !== 'connected' ? (
-                      <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-10 overflow-y-auto custom-scrollbar">
-                         <div className="w-full max-w-[450px]">
+                      <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 overflow-y-auto custom-scrollbar">
+                         <div className="w-full flex justify-center">
                             <QRCodeDisplay data={currentSession?.realQrData} />
                          </div>
-                         <div className="text-center glass p-8 rounded-[2.5rem] w-full max-w-[450px] border-white/5">
+                         <div className="text-center glass p-8 rounded-[2.5rem] w-full max-w-[400px] border-white/5">
                             <h4 className="font-black text-emerald-500 mb-2">خطوة الربط</h4>
                             <p className="text-sm font-bold text-slate-400 leading-relaxed">افتح واتساب &gt; الأجهزة المرتبطة &gt; ربط جهاز. ثم وجه الكاميرا نحو المربع أعلاه.</p>
                          </div>
@@ -310,13 +310,6 @@ const App = () => {
            </div>
         )}
       </main>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.1); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.3); }
-      `}</style>
     </div>
   );
 };
