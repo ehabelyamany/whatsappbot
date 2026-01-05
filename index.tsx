@@ -51,10 +51,11 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
     const generate = async () => {
       try {
         setLoading(true);
-        const qrContent = data || "https://ehab-elyamany.com/waiting-for-bridge";
+        // نص تجريبي واضح لو مفيش بيانات فعلية
+        const qrContent = data || "https://ehab-elyamany.com/waiting-for-connection";
         const url = await QRCode.toDataURL(qrContent, { 
-          width: 400, 
-          margin: 2, 
+          width: 512, // جودة أعلى
+          margin: 1, 
           color: { dark: '#000000', light: '#ffffff' },
           errorCorrectionLevel: 'H'
         });
@@ -71,11 +72,20 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
   if (loading) return (
     <div className="w-[300px] h-[300px] flex flex-col items-center justify-center text-emerald-500 gap-4">
       <Loader2 className="animate-spin" size={48} />
-      <span className="text-[10px] font-black uppercase tracking-widest">Generating QR...</span>
+      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">تحميل الرمز...</span>
     </div>
   );
 
-  return <img src={src} className={`w-[300px] h-[300px] transition-all duration-700 ${!data ? 'blur-[2px] opacity-40' : 'opacity-100 scale-105'}`} alt="WhatsApp QR" />;
+  return (
+    <div className="relative w-[300px] h-[300px] flex items-center justify-center">
+      <img 
+        src={src} 
+        style={{ imageRendering: 'pixelated' }} // لضمان حدة المربعات وسهولة المسح
+        className={`w-full h-full object-contain aspect-square transition-all duration-700 ${!data ? 'opacity-30 blur-[1px]' : 'opacity-100 shadow-xl'}`} 
+        alt="WhatsApp QR Code" 
+      />
+    </div>
+  );
 };
 
 const App = () => {
@@ -115,8 +125,9 @@ const App = () => {
   };
 
   const handleAddSession = () => {
+    const newId = `Channel-${Math.floor(100 + Math.random() * 899)}`;
     const newSession = {
-      id: `Channel-${Math.floor(100 + Math.random() * 899)}`,
+      id: newId,
       status: 'disconnected',
       aiProfileId: profiles[0]?.id || '',
       bridgeKey: 'EHAB-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
@@ -124,7 +135,7 @@ const App = () => {
       messages: []
     };
     setSessions([...sessions, newSession]);
-    setSelectedSessionId(newSession.id);
+    setSelectedSessionId(newId);
   };
 
   const simulateMessage = async (sessionId: string, sender: string, text: string) => {
