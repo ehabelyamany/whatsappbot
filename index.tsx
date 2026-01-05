@@ -51,7 +51,6 @@ const QRCodeDisplay = ({ data }: { data: string | null }) => {
     const generate = async () => {
       try {
         setLoading(true);
-        // نستخدم نص افتراضي لو مفيش بيانات عشان نتأكد إن المربع مش هيفضل فاضي
         const qrContent = data || "https://ehab-elyamany.com/waiting-for-bridge";
         const url = await QRCode.toDataURL(qrContent, { 
           width: 400, 
@@ -226,7 +225,7 @@ const App = () => {
                          </div>
                          <div className="text-center glass p-8 rounded-[2.5rem] max-w-sm border-white/5">
                             <h4 className="font-black text-emerald-500 mb-2">خطوة الربط</h4>
-                            <p className="text-xs font-bold text-slate-400 leading-relaxed">افتح واتساب > الأجهزة المرتبطة > ربط جهاز. ثم وجه الكاميرا نحو المربع أعلاه.</p>
+                            <p className="text-xs font-bold text-slate-400 leading-relaxed">افتح واتساب &gt; الأجهزة المرتبطة &gt; ربط جهاز. ثم وجه الكاميرا نحو المربع أعلاه.</p>
                          </div>
                       </div>
                     ) : (
