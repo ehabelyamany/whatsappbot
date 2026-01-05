@@ -1,35 +1,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import * as Lucide from 'lucide-react';
-import QRCode from 'qrcode';
-import { GoogleGenAI } from "@google/genai";
-
-// استخراج الأيقونات بشكل آمن
-const { 
+import { 
   QrCode, Cpu, Plus, Trash2, LogOut, ShieldCheck, Activity, Zap, 
   MessageCircle, Code, Copy, CheckCircle2, AlertCircle, Play, 
   ChevronRight, User 
-} = Lucide;
+} from 'lucide-react';
+import QRCode from 'qrcode';
+import { GoogleGenAI } from "@google/genai";
 
-// --- الإعدادات الثابتة ---
 const STORAGE_KEYS = {
   PROFILES: 'farida_v7_profiles',
   SESSIONS: 'farida_v7_sessions',
 };
 
-// --- المكونات الصغيرة ---
-const NavItem = ({ id, icon, label, active, set }) => (
+const NavItem = ({ id, icon, label, active, set }: any) => (
   <button 
     onClick={() => set(id)} 
     className={`w-full flex items-center gap-5 p-6 rounded-[2rem] transition-all duration-500 ${active === id ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:bg-slate-900 hover:text-slate-300'}`}
   >
-    {React.cloneElement(icon as React.ReactElement, { size: 24 })}
+    {icon}
     <span className="hidden lg:block font-black text-sm">{label}</span>
   </button>
 );
 
-const SimulationButton = ({ onClick, label }) => (
+const SimulationButton = ({ onClick, label }: any) => (
   <button 
     onClick={onClick} 
     className="p-4 bg-slate-900 rounded-2xl text-[10px] font-black text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all uppercase border border-emerald-500/10"
@@ -38,7 +33,7 @@ const SimulationButton = ({ onClick, label }) => (
   </button>
 );
 
-const StatBox = ({ label, value, unit }) => (
+const StatBox = ({ label, value, unit }: any) => (
   <div className="glass p-12 rounded-[4rem] border-white/5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
      <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest mb-4">{label}</p>
      <div className="flex items-baseline gap-4">
@@ -48,7 +43,7 @@ const StatBox = ({ label, value, unit }) => (
   </div>
 );
 
-const QRCodeDisplay = ({ data }) => {
+const QRCodeDisplay = ({ data }: { data: string | null }) => {
   const [src, setSrc] = useState('');
   useEffect(() => { 
     const generate = async () => {
@@ -62,41 +57,28 @@ const QRCodeDisplay = ({ data }) => {
   return src ? <img src={src} className={`w-[300px] h-[300px] transition-all ${!data ? 'blur-sm opacity-20' : 'opacity-100'}`} alt="QR" /> : null;
 };
 
-// --- التطبيق الرئيسي ---
 const App = () => {
   const [activeTab, setActiveTab] = useState('sessions');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [profiles, setProfiles] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // تحميل البيانات
   useEffect(() => {
     const savedProfiles = localStorage.getItem(STORAGE_KEYS.PROFILES);
     const savedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
-    
-    if (savedProfiles) {
-      setProfiles(JSON.parse(savedProfiles));
-    } else {
-      setProfiles([{
-        id: 'farida-main',
-        name: 'فريدة الذكية',
-        modelName: 'gemini-3-flash-preview',
-        systemInstruction: 'أنت فريدة، مساعدة إيهاب اليمني الشخصية. ردي بذكاء وثقة وبلهجة مصرية محترمة.',
-        temperature: 0.8
-      }]);
-    }
+    if (savedProfiles) setProfiles(JSON.parse(savedProfiles));
+    else setProfiles([{ id: 'farida-main', name: 'فريدة الذكية', modelName: 'gemini-3-flash-preview', systemInstruction: 'أنت فريدة، مساعدة إيهاب اليمني الشخصية.', temperature: 0.8 }]);
     if (savedSessions) setSessions(JSON.parse(savedSessions));
   }, []);
 
-  // حفظ البيانات
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(profiles));
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
   }, [profiles, sessions]);
 
-  const askFarida = async (prompt, profileId, senderName) => {
+  const askFarida = async (prompt: string, profileId: string, senderName: string) => {
     const profile = profiles.find(p => p.id === profileId);
     if (!profile) return "عذراً يا إيهاب، لم أجد إعدادات عقلي.";
     try {
@@ -109,7 +91,7 @@ const App = () => {
         config: { systemInstruction: profile.systemInstruction, temperature: profile.temperature }
       });
       return response.text || "فشلت في صياغة الرد.";
-    } catch (e) { return `خطأ في الاتصال بفريدة: ${e.message}`; }
+    } catch (e: any) { return `خطأ في الاتصال: ${e.message}`; }
   };
 
   const handleAddSession = () => {
@@ -125,13 +107,11 @@ const App = () => {
     setSelectedSessionId(newSession.id);
   };
 
-  const simulateMessage = async (sessionId, sender, text) => {
+  const simulateMessage = async (sessionId: string, sender: string, text: string) => {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) return;
-    
     const inbound = { id: Date.now().toString(), senderName: sender, text, timestamp: new Date(), type: 'inbound' };
     setSessions(prev => prev.map(s => s.id === sessionId ? {...s, messages: [...s.messages, inbound]} : s));
-
     setIsGenerating(true);
     const replyText = await askFarida(text, session.aiProfileId, sender);
     const outbound = { id: 'AI-'+Date.now(), senderName: 'فريدة', text: replyText, timestamp: new Date(), type: 'outbound' };
@@ -148,10 +128,7 @@ const App = () => {
           <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
             <Zap size={48} className="text-emerald-500" fill="currentColor" />
           </div>
-          <div>
-            <h1 className="text-5xl font-black text-white mb-2">فريدة V7</h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">WhatsApp AI System</p>
-          </div>
+          <h1 className="text-5xl font-black text-white">فريدة V7</h1>
           <button onClick={() => setIsLoggedIn(true)} className="w-full py-6 bg-emerald-600 rounded-[2.5rem] font-black text-xl hover:bg-emerald-500 transition-all shadow-xl">دخول النظام</button>
         </div>
       </div>
@@ -159,18 +136,18 @@ const App = () => {
   }
 
   return (
-    <div className="flex h-screen bg-[#030712] text-slate-100 font-sans rtl overflow-hidden">
+    <div className="flex h-screen bg-[#030712] text-slate-100 rtl overflow-hidden">
       <aside className="w-24 lg:w-80 bg-slate-950 border-l border-white/5 flex flex-col p-8 z-50">
         <div className="flex items-center gap-4 text-emerald-500 mb-16 lg:px-4">
           <Zap size={28} fill="currentColor" />
           <span className="hidden lg:block text-3xl font-black">فريدة</span>
         </div>
         <nav className="flex-1 space-y-4">
-          <NavItem id="sessions" icon={<MessageCircle />} label="البوتات والربط" active={activeTab} set={setActiveTab} />
-          <NavItem id="models" icon={<Cpu />} label="تخصيص الرد" active={activeTab} set={setActiveTab} />
-          <NavItem id="dashboard" icon={<Activity />} label="الأداء" active={activeTab} set={setActiveTab} />
+          <NavItem id="sessions" icon={<MessageCircle size={24} />} label="البوتات والربط" active={activeTab} set={setActiveTab} />
+          <NavItem id="models" icon={<Cpu size={24} />} label="تخصيص الرد" active={activeTab} set={setActiveTab} />
+          <NavItem id="dashboard" icon={<Activity size={24} />} label="الأداء" active={activeTab} set={setActiveTab} />
         </nav>
-        <button onClick={() => setIsLoggedIn(false)} className="mt-auto flex items-center gap-4 p-5 text-red-500 hover:bg-red-500/10 rounded-2xl transition-all font-black">
+        <button onClick={() => setIsLoggedIn(false)} className="mt-auto flex items-center gap-4 p-5 text-red-500 hover:bg-red-500/10 rounded-2xl font-black">
           <LogOut size={22} /> <span className="hidden lg:block">خروج</span>
         </button>
       </aside>
@@ -206,7 +183,7 @@ const App = () => {
                   <header className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-950/40 backdrop-blur-xl">
                     <div>
                       <h3 className="text-2xl font-black">{selectedSessionId}</h3>
-                      <p className="text-[10px] font-black text-emerald-500">Key: {currentSession?.bridgeKey}</p>
+                      <p className="text-[10px] font-black text-emerald-500 uppercase">Key: {currentSession?.bridgeKey}</p>
                     </div>
                     <div className="flex gap-4">
                        {currentSession?.status === 'disconnected' && (
@@ -230,7 +207,7 @@ const App = () => {
                     ) : (
                       <div className="flex-1 flex flex-col">
                          <div className="flex-1 p-10 overflow-y-auto space-y-6">
-                           {currentSession.messages.map(msg => (
+                           {currentSession.messages.map((msg: any) => (
                              <div key={msg.id} className={`flex flex-col ${msg.type === 'inbound' ? 'items-start' : 'items-end'}`}>
                                 <span className="text-[10px] font-black text-slate-600 mb-1 px-4 uppercase">{msg.senderName}</span>
                                 <div className={`max-w-[70%] p-6 rounded-[2.5rem] font-bold text-lg shadow-xl ${msg.type === 'inbound' ? 'bg-slate-900 border border-white/5' : 'bg-emerald-600 text-white'}`}>
@@ -243,7 +220,7 @@ const App = () => {
                          <div className="p-8 bg-slate-950/40 border-t border-white/5 grid grid-cols-2 md:grid-cols-3 gap-4">
                             <SimulationButton onClick={() => simulateMessage(selectedSessionId, 'أحمد', 'أهلاً')} label="رسالة أهلاً" />
                             <SimulationButton onClick={() => simulateMessage(selectedSessionId, 'سارة', 'مساعدة')} label="رسالة مساعدة" />
-                            <button onClick={() => setSessions(prev => prev.map(s => s.id === selectedSessionId ? {...s, messages: []} : s))} className="p-4 bg-slate-900 rounded-2xl text-[10px] font-black">مسح السجل</button>
+                            <button onClick={() => setSessions(prev => prev.map(s => s.id === selectedSessionId ? {...s, messages: []} : s))} className="p-4 bg-slate-900 rounded-2xl text-[10px] font-black text-slate-500">مسح السجل</button>
                          </div>
                       </div>
                     )}
@@ -256,8 +233,8 @@ const App = () => {
 
         {activeTab === 'models' && (
            <div className="p-16 space-y-12 overflow-y-auto h-full">
-              <h2 className="text-6xl font-black">تخصيص الرد</h2>
-              {profiles.map(p => (
+              <h2 className="text-6xl font-black tracking-tighter">تخصيص الرد</h2>
+              {profiles.map((p: any) => (
                 <div key={p.id} className="glass p-12 rounded-[4rem] border-white/5 space-y-10">
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                       <div className="space-y-4">
@@ -276,7 +253,7 @@ const App = () => {
 
         {activeTab === 'dashboard' && (
            <div className="p-16 space-y-12">
-              <h2 className="text-6xl font-black">الإحصائيات</h2>
+              <h2 className="text-6xl font-black tracking-tighter">الإحصائيات</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                  <StatBox label="القنوات" value={sessions.length} unit="قناة" />
                  <StatBox label="الرسائل" value={sessions.reduce((acc, s) => acc + s.messages.length, 0)} unit="رسالة" />
@@ -289,7 +266,6 @@ const App = () => {
   );
 };
 
-// تشغيل التطبيق في النهاية لضمان استقرار التحميل
 const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
