@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>فريدة V7 | نظام الإدارة الذكي</title>
+    <title>Farida OS | مركز إدارة السيرفر</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <script>
@@ -20,15 +20,24 @@
       }
       .glass {
         background: rgba(255, 255, 255, 0.02);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(40px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
-      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
       
       .terminal-text {
         font-family: 'Courier New', monospace;
+      }
+      
+      @keyframes pulse-emerald {
+        0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+        50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.3); }
+      }
+      
+      .active-glow {
+        animation: pulse-emerald 3s infinite;
       }
     </style>
   <script type="importmap">
@@ -37,7 +46,6 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "qrcode": "https://esm.sh/qrcode@^1.5.4",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
     "react/": "https://esm.sh/react@^19.2.3/",
     "vite": "https://esm.sh/vite@^7.3.0",
